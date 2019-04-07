@@ -167,7 +167,7 @@ calculateAvg([{_, V} | T], Sum, Ind) ->
 
 validateArgument(Argument, Type) ->
   case Type of
-    string_value -> (length(Argument) > 0);
+    string_value -> io_lib:char_list(Argument) and (length(Argument) > 0);
     integer -> is_integer(Argument);
     float_value -> is_float(Argument);
     monitor_record -> is_record(Argument, monitor);
