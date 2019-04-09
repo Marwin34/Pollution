@@ -29,7 +29,7 @@ addStation(Name, {N, E}, Monitor) ->
               false ->
                 Station = #station{name = Name, coordinates = {N, E}},
                 Stations = (Monitor#monitor.stations)#{Name => Station, {N, E} => Station},
-                #monitor{stations = Stations}
+                #monitor{stations = Stations, measures = Monitor#monitor.measures}
             end;
     _ -> error_logger:error_msg("Bad arguments in function addStation(Name, {N,E}, Monitor).")
   end.
@@ -95,7 +95,6 @@ getOneValue(Key, Date, Type, Monitor) ->
     _ -> error_logger:error_msg("Bad arguments in function getOneValue(Key, Date, Type, Monitor).")
   end.
 
-
 getStationMean(Key, Type, Monitor) ->
   Guard = validateArgument(Type, string_value) and validateArgument(Monitor, monitor_record),
   case Guard of
@@ -124,34 +123,41 @@ getDailyMean(Date, Type, Monitor) ->
     _ -> error_logger:error_msg("Bad arguments in function getDailyMean(Date, Type, Monitor).")
   end.
 
-
 getCorrelation(Type1, Type2, Monitor) ->
   Guard = validateArgument(Type1, string_value) and validateArgument(Type2, string_value),
   case Guard of
-      true ->List1 = maps:to_list(maps:filter(fun({_, _, _, Type}, _) -> Type1 == Type end, Monitor#monitor.measures)),
-        List2 = maps:to_list(maps:filter(fun({_, _, _, Type}, _) -> Type2 == Type end, Monitor#monitor.measures)),
-        Len1 = length(List1),
-        Len2 = length(List2),
-        if
-          (Len1 =< 0) or (Len2 =< 0) -> error_logger:error_msg("Unable to measure correlation, one list is empty");
-          true -> case Len1 >= Len2 of
-                    true -> calculateStd(List1, List2, Len2);
-                    false -> calculateStd(List1, List2, Len1)
-                  end
-        end;
+    true -> List1 = maps:to_list(maps:filter(fun({_, _, _, Type}, _) -> Type1 == Type end, Monitor#monitor.measures)),
+      List2 = maps:to_list(maps:filter(fun({_, _, _, Type}, _) -> Type2 == Type end, Monitor#monitor.measures)),
+      Len1 = length(List1),
+      Len2 = length(List2),
+      if
+        (Len1 =< 0) or (Len2 =< 0) -> error_logger:error_msg("Unable to measure correlation, one list is empty");
+        true -> case Len1 >= Len2 of
+                  true -> calculateStd(List1, List2);
+                  false -> calculateStd(List2, List1)
+                end
+      end;
     _ -> error_logger:error_msg("Bad arguments in function getCorrelation(Type1, Type2, Monitor).")
-end.
+  end.
 
-calculateStd(List1, List2, Len) ->
-  List3 = lists:sublist(List1, Len),
-  List4 = lists:zip(List2, List3),
-  Diffs = lists:map(fun({{_, V1}, {_, V2}}) -> abs(V1#measurement.value - V2#measurement.value) end, List4),
+calculateStd(Longer, Shorter) ->
+  Diffs = [V#measurement.value - valueFromShorter(Shorter, Key) || {{Key, _, _, _}, V}<- Longer],
   Sum = lists:foldl(fun(X, Acc) -> Acc + X end, 0, Diffs),
-  Avg = Sum / Len,
+  Len = length(Diffs),
+  Avg = Sum / length(Diffs),
   Stdsum = lists:foldl(fun(X, Acc) -> Acc + math:pow(X - Avg, 2) end, 0, Diffs),
-  case Len == 1 of
-    true -> math:sqrt(Stdsum);
-    false -> math:sqrt(1 / (Len - 1) * Stdsum)
+  if
+    Len == 1 -> math:sqrt(Stdsum);
+    true -> math:sqrt(1 / (Len - 1) * Stdsum) * getCEstimator(Len)
+  end.
+
+valueFromShorter(Shorter, Key) ->
+  Tmp = lists:filter(fun({{Key1, _, _, _}, _}) -> Key1 == Key end, Shorter),
+  if
+    length(Tmp) == 1 ->
+      [{_, V}] = Tmp,
+      V#measurement.value;
+    true -> 0
   end.
 
 calculateAvg([], _, _) ->
@@ -181,11 +187,19 @@ validateArgument(Argument, Type) ->
                    end
   end.
 
+getCEstimator(N) ->
+  if
+    N < 12 -> lists:nth(N - 1, [0.79788, 0.88623, 0.92132, 0.93999, 0.95153, 0.95937, 0.96503,
+      0.96931, 0.97266, 0.97535, 0.97756, 0.97941]);
+    true -> 1
+  end.
+
 printMsg(Value) ->
   case Value of
     monitor_error -> error_logger:error_msg("Monitor doesn't exist.");
     station_error -> error_logger:error_msg("Station doesn't exist.");
     meausrement_error -> error_logger:error_msg("Measurement doesn't exist.");
-    string_error -> error_logger:error_msg("Empty string.");
+    string_error -> error_logger:error_msg("
+    .");
     _ -> error_logger:error_msg(Value)
   end.
