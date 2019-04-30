@@ -141,7 +141,7 @@ getCorrelation(Type1, Type2, Monitor) ->
   end.
 
 calculateStd(Longer, Shorter) ->
-  Diffs = [V#measurement.value - valueFromShorter(Shorter, Key) || {{Key, _, _, _}, V}<- Longer],
+  Diffs = [V#measurement.value - valueFromShorter(Shorter, Key) || {{Key, _, _, _}, V}<- Longer, isInList(Shorter, Key)],
   Sum = lists:foldl(fun(X, Acc) -> Acc + X end, 0, Diffs),
   Len = length(Diffs),
   Avg = Sum / length(Diffs),
@@ -150,6 +150,10 @@ calculateStd(Longer, Shorter) ->
     Len == 1 -> math:sqrt(Stdsum);
     true -> math:sqrt(1 / (Len - 1) * Stdsum) * getCEstimator(Len)
   end.
+
+isInList(List, Target) ->
+  Res = [Key || {{Key, _, _, _}, _} <- List, Target == Key],
+  length(Res) > 0.
 
 valueFromShorter(Shorter, Key) ->
   Tmp = lists:filter(fun({{Key1, _, _, _}, _}) -> Key1 == Key end, Shorter),
