@@ -29,7 +29,7 @@ addStation(Name, {N, E}, Monitor) ->
               false ->
                 Station = #station{name = Name, coordinates = {N, E}},
                 Stations = (Monitor#monitor.stations)#{Name => Station, {N, E} => Station},
-                #monitor{stations = Stations, measures = Monitor#monitor.measures}
+                {monitor, #monitor{stations = Stations, measures = Monitor#monitor.measures}}
             end;
     _ -> {error, "Bad arguments in function addStation(Name, {N,E}, Monitor)."}
   end.
@@ -49,7 +49,7 @@ addValue(Key, Date, Type, Value, Monitor) ->
                   false ->
                     NewMeasures = (Monitor#monitor.measures)#{{StationName, StationCoordinates, Date, Type} =>
                     #measurement{value = Value}},
-                    #monitor{stations = Stations, measures = NewMeasures}
+                    {monitor, #monitor{stations = Stations, measures = NewMeasures}}
                 end;
               false -> {error, "Unable to add measurement, station doesn't exist."}
             end;
@@ -68,7 +68,7 @@ removeValue(Key, Date, Type, Monitor) ->
                 case maps:is_key({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures) of
                   true ->
                     NewMeasures = maps:remove({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures),
-                    #monitor{stations = Stations, measures = NewMeasures};
+                    {monitor, #monitor{stations = Stations, measures = NewMeasures}};
                   false ->
                     {error, "Unable to remove measurement, measurement doesn't exist."}
                 end;
@@ -87,7 +87,7 @@ getOneValue(Key, Date, Type, Monitor) ->
                 StationName = Station#station.name,
                 StationCoordinates = Station#station.coordinates,
                 case maps:is_key({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures) of
-                  true -> maps:get({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures);
+                  true -> {value, maps:get({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures)};
                   false -> {error, "Unable to return measurement, measurement doesn't exist."}
                 end;
               false -> {error, "Unable to return measurement, station doesn't exist."}
@@ -107,7 +107,7 @@ getStationMean(Key, Type, Monitor) ->
                 List = maps:to_list(maps:filter(fun({StationName2, StationCoordinates2, _, Type2}, _) ->
                   (StationName2 == StationName) and (StationCoordinates2 == StationCoordinates) and (Type2 == Type) end,
                   Monitor#monitor.measures)),
-                calculateAvg(List, 0, 0);
+                {value, calculateAvg(List, 0, 0)};
               false -> {error, "Unable to calculate mean, station doesn't exist."}
             end;
     _ -> {error, "Bad arguments in function getStationMean(Key, Type, Monitor)."}
@@ -119,7 +119,7 @@ getDailyMean(Date, Type, Monitor) ->
     true -> {{Year, Month, Day}, _} = Date,
       List = maps:to_list(maps:filter(fun({_, _, {{Year2, Month2, Day2}, {_, _, _}}, Type2}, _) ->
         (Year2 == Year) and (Month2 == Month) and (Day2 == Day) and (Type2 == Type) end, Monitor#monitor.measures)),
-      calculateAvg(List, 0, 0);
+      {value, calculateAvg(List, 0, 0)};
     _ -> {error, "Bad arguments in function getDailyMean(Date, Type, Monitor)."}
   end.
 
@@ -133,8 +133,8 @@ getCorrelation(Type1, Type2, Monitor) ->
       if
         (Len1 =< 0) or (Len2 =< 0) -> {error, "Unable to measure correlation, one list is empty"};
         true -> case Len1 >= Len2 of
-                  true -> calculateStd(List1, List2);
-                  false -> calculateStd(List2, List1)
+                  true -> {value, calculateStd(List1, List2)};
+                  false -> {value, calculateStd(List2, List1)}
                 end
       end;
     _ -> {error, "Bad arguments in function getCorrelation(Type1, Type2, Monitor)."}
