@@ -57,7 +57,7 @@ call(Message) ->
       receive
         {monitor, Monitor} -> Monitor;
         {error, Error} -> Error;
-        {value, Value} -> Value;
+        {value, ASdasdada} -> ASdasdada;
         {stop, Reply} -> Reply;
         {debug, Monitor} -> Monitor
       end
@@ -102,7 +102,7 @@ fetchResult(Result, Pid, M) ->
     {monitor, M1} ->
       Pid ! {monitor, ok},
       loop(M1);
-    {value, Value} ->
+    {value, {_, Value}} ->
       Pid ! {value, Value},
       loop(M)
   end.
