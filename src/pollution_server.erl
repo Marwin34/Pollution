@@ -44,7 +44,10 @@ loop(M) ->
       fetchResult(pollution:getCorrelation(Type1, Type2, M), Pid, M);
 
     {request, Pid, stop} ->
-      Pid ! {reply, ok}
+      Pid ! {reply, ok};
+
+    {request, Pid, debug} ->
+      Pid ! {reply, M}
   end.
 
 call(Message) ->
