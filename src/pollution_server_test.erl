@@ -32,7 +32,7 @@ addStationSingleOK_test() ->
       {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
       ?assertEqual(M2, M)
   after
-    1000 ->
+    10 ->
       pollution_server:stop(),
       ?assert(false)
   end.
@@ -50,7 +50,7 @@ addStationMultipleOK_test() ->
       {_, M3} = pollution:addStation("Sacz Stary", {45.6, 65.4}, M2),
       ?assertEqual(M3, M)
   after
-    1000 ->
+    10 ->
       pollution_server:stop(),
       ?assert(false)
   end.
@@ -96,7 +96,7 @@ addValueSingleOK_test() ->
       {_, M5} = pollution:addValue({55.6, 77.8}, Date, "PM10", 105, M4),
       ?assertEqual(M5, M)
   after
-    1000 ->
+    10 ->
       pollution_server:stop(),
       ?assert(false)
   end.
@@ -117,7 +117,7 @@ addValueMultipleOK_test() ->
       {_, M4} = pollution:addValue("Sacz", Date, "PM2,5", 127, M3),
       ?assertEqual(M4, M)
   after
-    1000 ->
+    10 ->
       pollution_server:stop(),
       ?assert(false)
   end.
@@ -171,7 +171,7 @@ removeValueSingleOK_test() ->
       {_, M3} = pollution:addStation("Stary Sacz", {55.6, 77.8}, M2),
       ?assertEqual(M3, M)
   after
-    1000 ->
+    10 ->
       pollution_server:stop(),
       ?assert(false)
   end.
@@ -192,7 +192,7 @@ removeValueMultipleOK_test() ->
       {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
       ?assertEqual(M2, M)
   after
-    1000 ->
+    10 ->
       pollution_server:stop(),
       ?assert(false)
   end.
@@ -229,7 +229,7 @@ getOneValueOK_test() ->
   Date = calendar:local_time(),
   pollution_server:addStation("Sacz", {55.5, 77.7}),
   pollution_server:addValue("Sacz", Date, "PM10", 105),
-  {_, Val1} = pollution_server:getOneValue("Sacz", Date, "PM10"),
+  Val1 = pollution_server:getOneValue("Sacz", Date, "PM10"),
   pollution_server:stop(),
   ?assertEqual(105, Val1).
 
