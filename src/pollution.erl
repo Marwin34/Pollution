@@ -87,7 +87,10 @@ getOneValue(Key, Date, Type, Monitor) ->
                 StationName = Station#station.name,
                 StationCoordinates = Station#station.coordinates,
                 case maps:is_key({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures) of
-                  true -> {value, maps:get({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures)};
+                  true ->
+                    Val = maps:get({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures),
+                    ValNormalized = Val#measurement.value,
+                    {value, ValNormalized};
                   false -> {error, "Unable to return measurement, measurement doesn't exist."}
                 end;
               false -> {error, "Unable to return measurement, station doesn't exist."}
