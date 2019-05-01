@@ -242,3 +242,49 @@ getOneValueBadArgumentError_test() ->
   Val1 = pollution_server:getOneValue("Sacz", Date, pm10),
   pollution_server:stop(),
   ?assertEqual(ExpectedValue, Val1).
+
+getOneValueStationDoesntExist_test() ->
+  ExpectedVal = "Unable to return measurement, station doesn't exist.",
+  Date = calendar:local_time(),
+  pollution_server:start(),
+  Val1 = pollution_server:getOneValue("Sacz", Date, "PM10"),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedVal, Val1).
+
+getOneValueMeasurementDoesntExist_test() ->
+  ExpectedVal = "Unable to return measurement, measurement doesn't exist.",
+  Date = calendar:local_time(),
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  Val1 = pollution_server:getOneValue("Sacz", Date, "PM10"),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedVal, Val1).
+
+getStationMeanOK_test() ->
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,4,1},{19,11,10}}, "PM10", 127),
+  Val1 = pollution_server:getStationMean("Sacz", "PM10"),
+  pollution_server:stop(),
+  ?assertEqual(126.0, Val1).
+
+getStationMeanBadArgumentError_test() ->
+  ExpectedVal =  "Bad arguments in function getStationMean(Key, Type, Monitor).",
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,4,1},{19,11,10}}, "PM10", 127),
+  Val1 = pollution_server:getStationMean("Sacz", pm10),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedVal, Val1).
+
+getStationMeanStationDoesntExistError_test() ->
+  ExpectedVal =  "Unable to calculate mean, station doesn't exist.",
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,4,1},{19,11,10}}, "PM10", 127),
+  Val1 = pollution_server:getStationMean(sacz, "PM10"),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedVal, Val1).
