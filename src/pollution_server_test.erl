@@ -288,3 +288,29 @@ getStationMeanStationDoesntExistError_test() ->
   Val1 = pollution_server:getStationMean(sacz, "PM10"),
   pollution_server:stop(),
   ?assertEqual(ExpectedVal, Val1).
+
+getDailyMeanOK_test() ->
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,5,1},{17,11,10}}, "PM10", 127),
+  Val1 = pollution_server:getDailyMean({{2019,5,1},{19,11,10}}, "PM10"),
+  pollution_server:stop(),
+  ?assertEqual(126.0, Val1).
+
+getDailyMeanOKNoDate_test() ->
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  Val1 = pollution_server:getDailyMean({{2019,5,1},{19,11,10}}, "PM10"),
+  pollution_server:stop(),
+  ?assertEqual(0.0, Val1).
+
+getDailyMeanBadArgumentError_test() ->
+  ExpectedVal = "Bad arguments in function getDailyMean(Date, Type, Monitor).",
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,5,1},{17,11,10}}, "PM10", 127),
+  Val1 = pollution_server:getDailyMean({{2019,5,1},{19,11,10}}, pm10),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedVal, Val1).
