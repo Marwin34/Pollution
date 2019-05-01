@@ -141,7 +141,7 @@ getCorrelation(Type1, Type2, Monitor) ->
   end.
 
 calculateStd(Longer, Shorter) ->
-  Diffs = [V#measurement.value - valueFromShorter(Shorter, Key) || {{Key, _, _, _}, V}<- Longer, isInList(Shorter, Key)],
+  Diffs = [V#measurement.value - valueFromShorter(Shorter, Key) || {{Key, _, _, _}, V} <- Longer, isInList(Shorter, Key)],
   Sum = lists:foldl(fun(X, Acc) -> Acc + X end, 0, Diffs),
   Len = length(Diffs),
   Avg = Sum / length(Diffs),
@@ -177,7 +177,10 @@ calculateAvg([{_, V} | T], Sum, Ind) ->
 
 validateArgument(Argument, Type) ->
   case Type of
-    string_value -> io_lib:char_list(Argument) and (length(Argument) > 0);
+    string_value -> case io_lib:char_list(Argument) of
+                      true -> (length(Argument) > 0);
+                      _ -> false
+                    end;
     integer -> is_integer(Argument);
     float_value -> is_float(Argument);
     monitor_record -> is_record(Argument, monitor);
