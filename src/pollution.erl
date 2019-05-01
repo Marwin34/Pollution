@@ -25,13 +25,13 @@ addStation(Name, {N, E}, Monitor) ->
     validateArgument(N, float_value) and validateArgument(E, float_value),
   case Guard of
     true -> case maps:is_key(Name, Monitor#monitor.stations) or maps:is_key({N, E}, Monitor#monitor.stations) of
-              true -> error_logger:error_msg("Unable to addStation, station already exists.");
+              true -> {error, "Unable to addStation, station already exists."};
               false ->
                 Station = #station{name = Name, coordinates = {N, E}},
                 Stations = (Monitor#monitor.stations)#{Name => Station, {N, E} => Station},
                 #monitor{stations = Stations, measures = Monitor#monitor.measures}
             end;
-    _ -> error_logger:error_msg("Bad arguments in function addStation(Name, {N,E}, Monitor).")
+    _ -> {error, "Bad arguments in function addStation(Name, {N,E}, Monitor)."}
   end.
 
 addValue(Key, Date, Type, Value, Monitor) ->
@@ -45,15 +45,15 @@ addValue(Key, Date, Type, Value, Monitor) ->
                 StationName = Station#station.name,
                 StationCoordinates = Station#station.coordinates,
                 case maps:is_key({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures) of
-                  true -> error_logger:error_msg("Unable to add measurement, measurement already exists.");
+                  true -> {error, "Unable to add measurement, measurement already exists."};
                   false ->
                     NewMeasures = (Monitor#monitor.measures)#{{StationName, StationCoordinates, Date, Type} =>
                     #measurement{value = Value}},
                     #monitor{stations = Stations, measures = NewMeasures}
                 end;
-              false -> error_logger:error_msg("Unable to add measurement, station doesn't exist.")
+              false -> {error, "Unable to add measurement, station doesn't exist."}
             end;
-    _ -> error_logger:error_msg("Bad arguments in function addValue(Key, Date, Type, Value, Monitor).")
+    _ -> {error, "Bad arguments in function addValue(Key, Date, Type, Value, Monitor)."}
   end.
 
 removeValue(Key, Date, Type, Monitor) ->
@@ -70,11 +70,11 @@ removeValue(Key, Date, Type, Monitor) ->
                     NewMeasures = maps:remove({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures),
                     #monitor{stations = Stations, measures = NewMeasures};
                   false ->
-                    error_logger:error_msg("Unable to remove measurement, measurement doesn't exist.")
+                    {error, "Unable to remove measurement, measurement doesn't exist."}
                 end;
-              false -> error_logger:error_msg("Unable to remove measurement, station doesn't exist.")
+              false -> {error, "Unable to remove measurement, station doesn't exist."}
             end;
-    _ -> error_logger:error_msg("Bad arguments in function removeValue(Key, Date, Type, Monitor).")
+    _ -> {error, "Bad arguments in function removeValue(Key, Date, Type, Monitor)."}
   end.
 
 getOneValue(Key, Date, Type, Monitor) ->
@@ -88,11 +88,11 @@ getOneValue(Key, Date, Type, Monitor) ->
                 StationCoordinates = Station#station.coordinates,
                 case maps:is_key({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures) of
                   true -> maps:get({StationName, StationCoordinates, Date, Type}, Monitor#monitor.measures);
-                  false -> error_logger:error_msg("Unable to return measurement, measurement doesn't exist.")
+                  false -> {error, "Unable to return measurement, measurement doesn't exist."}
                 end;
-              false -> error_logger:error_msg("Unable to return measurement, station doesn't exist.")
+              false -> {error, "Unable to return measurement, station doesn't exist."}
             end;
-    _ -> error_logger:error_msg("Bad arguments in function getOneValue(Key, Date, Type, Monitor).")
+    _ -> {error, "Bad arguments in function getOneValue(Key, Date, Type, Monitor)."}
   end.
 
 getStationMean(Key, Type, Monitor) ->
@@ -108,9 +108,9 @@ getStationMean(Key, Type, Monitor) ->
                   (StationName2 == StationName) and (StationCoordinates2 == StationCoordinates) and (Type2 == Type) end,
                   Monitor#monitor.measures)),
                 calculateAvg(List, 0, 0);
-              false -> error_logger:error_msg("Unable to calculate mean, station doesn't exist.")
+              false -> {error, "Unable to calculate mean, station doesn't exist."}
             end;
-    _ -> error_logger:error_msg("Bad arguments in function getStationMean(Key, Type, Monitor).")
+    _ -> {error, "Bad arguments in function getStationMean(Key, Type, Monitor)."}
   end.
 
 getDailyMean(Date, Type, Monitor) ->
@@ -120,7 +120,7 @@ getDailyMean(Date, Type, Monitor) ->
       List = maps:to_list(maps:filter(fun({_, _, {{Year2, Month2, Day2}, {_, _, _}}, Type2}, _) ->
         (Year2 == Year) and (Month2 == Month) and (Day2 == Day) and (Type2 == Type) end, Monitor#monitor.measures)),
       calculateAvg(List, 0, 0);
-    _ -> error_logger:error_msg("Bad arguments in function getDailyMean(Date, Type, Monitor).")
+    _ -> {error, "Bad arguments in function getDailyMean(Date, Type, Monitor)."}
   end.
 
 getCorrelation(Type1, Type2, Monitor) ->
@@ -131,13 +131,13 @@ getCorrelation(Type1, Type2, Monitor) ->
       Len1 = length(List1),
       Len2 = length(List2),
       if
-        (Len1 =< 0) or (Len2 =< 0) -> error_logger:error_msg("Unable to measure correlation, one list is empty");
+        (Len1 =< 0) or (Len2 =< 0) -> {error, "Unable to measure correlation, one list is empty"};
         true -> case Len1 >= Len2 of
                   true -> calculateStd(List1, List2);
                   false -> calculateStd(List2, List1)
                 end
       end;
-    _ -> error_logger:error_msg("Bad arguments in function getCorrelation(Type1, Type2, Monitor).")
+    _ -> {error, "Bad arguments in function getCorrelation(Type1, Type2, Monitor)."}
   end.
 
 calculateStd(Longer, Shorter) ->
@@ -196,14 +196,4 @@ getCEstimator(N) ->
     N < 12 -> lists:nth(N - 1, [0.79788, 0.88623, 0.92132, 0.93999, 0.95153, 0.95937, 0.96503,
       0.96931, 0.97266, 0.97535, 0.97756, 0.97941]);
     true -> 1
-  end.
-
-printMsg(Value) ->
-  case Value of
-    monitor_error -> error_logger:error_msg("Monitor doesn't exist.");
-    station_error -> error_logger:error_msg("Station doesn't exist.");
-    meausrement_error -> error_logger:error_msg("Measurement doesn't exist.");
-    string_error -> error_logger:error_msg("
-    .");
-    _ -> error_logger:error_msg(Value)
   end.
