@@ -22,65 +22,75 @@ init() ->
 
 loop(M) ->
   receive
-    {request, Pid, add_station, {Name, {N, E}}} ->
+    {request, Pid, {addStation, {Name, {N, E}}}} ->
+      io:write(Pid),
       M1 = pollution:addStation(Name, {N, E}, M),
       Pid ! {reply, ok},
       loop(M1);
 
-    {request, Pid, add_value, {Key, Date, Type, Value}} ->
+    {request, Pid, {addValue, {Key, Date, Type, Value}}} ->
       M1 = pollution:addValue(Key, Date, Type, Value, M),
       Pid ! {reply, ok},
       loop(M1);
 
-    {request, Pid, remove_value, {Key, Date, Type}} ->
+    {request, Pid, {removeValue, {Key, Date, Type}}} ->
       M1 = pollution:removeValue(Key, Date, Type, M),
       Pid ! {reply, ok},
       loop(M1);
 
-    {request, Pid, get_one_value, {Key, Date, Type}} ->
+    {request, Pid, {getOneValue, {Key, Date, Type}}} ->
       V = pollution:getOneValue(Key, Date, Type, M),
       Pid ! {reply, V},
       loop(M);
 
-    {request, Pid, get_station_mean, {Key, Type}} ->
+    {request, Pid, {getStationMean, {Key, Type}}} ->
       V = pollution:getStationMean(Key, Type, M),
       Pid ! {reply, V},
       loop(M);
 
-    {request, Pid, get_daily_mean, {Date, Type}} ->
+    {request, Pid, {getDailyMean, {Date, Type}}} ->
       V = pollution:getDailyMean(Date, Type, M),
       Pid ! {reply, V},
       loop(M);
 
-    {request, Pid, get_correlation, {Type1, Type2}} ->
+    {request, Pid, {getCorrelation, {Type1, Type2}}} ->
       V = pollution:getCorrelation(Type1, Type2, M),
       Pid ! {reply, V},
-      loop(M);
-
-    {request, Pid, test} ->
-      Pid ! {reply, test},
       loop(M)
   end.
 
 stop() -> ok.
 
+call(Message) ->
+  p_server ! {request, self(), Message},
+  receive
+    {reply, Reply} -> Reply
+  end.
+
 addStation(Name, {N, E}) ->
-  p_server ! {request, self(), add_station, {Name, {N, E}}}.
+  Message = {addStation, {Name, {N, E}}},
+  call(Message).
 
 addValue(Key, Date, Type, Value) ->
-  p_server ! {request, self(), add_value, {Key, Date, Type, Value}}.
+  Message = {addValue, {Key, Date, Type, Value}},
+  call(Message).
 
 removeValue(Key, Date, Type) ->
-  p_server ! {request, self(), remove_value, {Key, Date, Type}}.
+  Message = {removeValue, {Key, Date, Type}},
+  call(Message).
 
 getOneValue(Key, Date, Type) ->
-  p_server ! {request, self(), get_one_value, {Key, Date, Type}}.
+  Message = {getOneValue, {Key, Date, Type}},
+  call(Message).
 
 getStationMean(Key, Type) ->
-  p_server ! {request, self(), get_station_mean, {Key, Type}}.
+  Message = {getStationMean, {Key, Type}},
+  call(Message).
 
 getDailyMean(Date, Type) ->
-  p_server ! {request, self(), get_daily_mean, {Date, Type}}.
+  Message = {getDailyMean, {Date, Type}},
+  call(Message).
 
 getCorrelation(Type1, Type2) ->
-  p_server ! {request, self(), get_correlation, {Type1, Type2}}.
+  Message = {getCorrelation, {Type1, Type2}},
+  call(Message).
