@@ -314,3 +314,36 @@ getDailyMeanBadArgumentError_test() ->
   Val1 = pollution_server:getDailyMean({{2019,5,1},{19,11,10}}, pm10),
   pollution_server:stop(),
   ?assertEqual(ExpectedVal, Val1).
+
+getCorrelationOK_test() ->
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM2,5", 127),
+  Val1 = pollution_server:getCorrelation("PM10", "PM2,5"),
+  pollution_server:stop(),
+  ?assertEqual(0.0, Val1).
+
+getCorrelationBadArgumentError_test() ->
+  ExpectedValue = "Bad arguments in function getCorrelation(Type1, Type2, Monitor).",
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM2,5", 127),
+  Val1 = pollution_server:getCorrelation(pm10, "PM2,5"),
+  Val2 = pollution_server:getCorrelation("PM10", pm2),
+  Val3 = pollution_server:getCorrelation(pm10, pm2),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedValue, Val1),
+  ?assertEqual(ExpectedValue, Val2),
+  ?assertEqual(ExpectedValue, Val3).
+
+getCorrelationOneListEmptyError_test() ->
+  ExpectedValue = "Unable to measure correlation, one list is empty",
+  pollution_server:start(),
+  pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
+  pollution_server:addValue("Sacz", {{2019,5,1},{19,11,11}}, "PM10", 127),
+  Val1 = pollution_server:getCorrelation("PM10", "PM2,5"),
+  pollution_server:stop(),
+  ?assertEqual(ExpectedValue, Val1).
