@@ -102,7 +102,7 @@ fetchResult(Result, Pid, M) ->
     {monitor, M1} ->
       Pid ! {monitor, ok},
       loop(M1);
-    {value, {_, Value}} ->
+    {value, Value} ->
       Pid ! {value, Value},
       loop(M)
   end.
