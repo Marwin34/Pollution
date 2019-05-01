@@ -58,7 +58,7 @@ call(Message) ->
         {monitor, Monitor} -> Monitor;
         {error, Error} -> Error;
         {value, Value} -> Value;
-        {stop, Message} -> Message;
+        {stop, Reply} -> Reply;
         {debug, Monitor} -> Monitor
       end
   end.
