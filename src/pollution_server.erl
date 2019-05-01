@@ -44,10 +44,10 @@ loop(M) ->
       fetchResult(pollution:getCorrelation(Type1, Type2, M), Pid, M);
 
     {request, Pid, stop} ->
-      Pid ! {reply, ok};
+      Pid ! {stop, ok};
 
     {request, Pid, debug} ->
-      Pid ! {reply, M}
+      Pid ! {debug, M}
   end.
 
 call(Message) ->
@@ -55,8 +55,11 @@ call(Message) ->
     undefined -> {error, "Pollution server undefined"};
     _ -> p_server ! {request, self(), Message},
       receive
-        {reply, Reply} -> Reply;
-        {error, Reply} -> Reply
+        {monitor, Monitor} -> Monitor;
+        {error, Error} -> Error;
+        {value, Value} -> Value;
+        {stop, Message} -> Message;
+        {debug, Monitor} -> Monitor
       end
   end.
 
@@ -96,7 +99,10 @@ fetchResult(Result, Pid, M) ->
     {error, Message} ->
       Pid ! {error, Message},
       loop(M);
-    M1 ->
-      Pid ! {reply, ok},
-      loop(M1)
+    {monitor, M1} ->
+      Pid ! {monitor, ok},
+      loop(M1);
+    {value, Value} ->
+      Pid ! {value, Value},
+      loop(M)
   end.
