@@ -41,16 +41,20 @@ loop(M) ->
       fetchResult(pollution:getDailyMean(Date, Type, M), Pid, M);
 
     {request, Pid, {getCorrelation, {Type1, Type2}}} ->
-      fetchResult(pollution:getCorrelation(Type1, Type2, M), Pid, M)
+      fetchResult(pollution:getCorrelation(Type1, Type2, M), Pid, M);
+
+    {request, Pid, stop} ->
+      Pid ! {reply, ok}
   end.
 
-stop() -> ok.
-
 call(Message) ->
-  p_server ! {request, self(), Message},
-  receive
-    {reply, Reply} -> Reply;
-    {error, Reply} -> Reply
+  case whereis(p_server) of
+    undefined -> {error, "Pollution server undefined"};
+    _ -> p_server ! {request, self(), Message},
+      receive
+        {reply, Reply} -> Reply;
+        {error, Reply} -> Reply
+      end
   end.
 
 addStation(Name, {N, E}) ->
@@ -80,6 +84,9 @@ getDailyMean(Date, Type) ->
 getCorrelation(Type1, Type2) ->
   Message = {getCorrelation, {Type1, Type2}},
   call(Message).
+
+stop() ->
+  call(stop).
 
 fetchResult(Result, Pid, M) ->
   case Result of
