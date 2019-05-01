@@ -168,7 +168,7 @@ valueFromShorter(Shorter, Key) ->
   end.
 
 calculateAvg([], _, _) ->
-  0;
+  0.0;
 calculateAvg([{_, V}], Sum, Ind) ->
   Sum2 = Sum + V#measurement.value,
   Ind2 = Ind + 1,
