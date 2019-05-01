@@ -23,40 +23,25 @@ init() ->
 loop(M) ->
   receive
     {request, Pid, {addStation, {Name, {N, E}}}} ->
-      io:write(Pid),
-      M1 = pollution:addStation(Name, {N, E}, M),
-      Pid ! {reply, ok},
-      loop(M1);
+      fetchResult(pollution:addStation(Name, {N, E}, M), Pid, M);
 
     {request, Pid, {addValue, {Key, Date, Type, Value}}} ->
-      M1 = pollution:addValue(Key, Date, Type, Value, M),
-      Pid ! {reply, ok},
-      loop(M1);
+      fetchResult(pollution:addValue(Key, Date, Type, Value, M), Pid, M);
 
     {request, Pid, {removeValue, {Key, Date, Type}}} ->
-      M1 = pollution:removeValue(Key, Date, Type, M),
-      Pid ! {reply, ok},
-      loop(M1);
+      fetchResult(pollution:removeValue(Key, Date, Type, M), Pid, M);
 
     {request, Pid, {getOneValue, {Key, Date, Type}}} ->
-      V = pollution:getOneValue(Key, Date, Type, M),
-      Pid ! {reply, V},
-      loop(M);
+      fetchResult(pollution:getOneValue(Key, Date, Type, M), Pid, M);
 
     {request, Pid, {getStationMean, {Key, Type}}} ->
-      V = pollution:getStationMean(Key, Type, M),
-      Pid ! {reply, V},
-      loop(M);
+      fetchResult(pollution:getStationMean(Key, Type, M), Pid, M);
 
     {request, Pid, {getDailyMean, {Date, Type}}} ->
-      V = pollution:getDailyMean(Date, Type, M),
-      Pid ! {reply, V},
-      loop(M);
+      fetchResult(pollution:getDailyMean(Date, Type, M), Pid, M);
 
     {request, Pid, {getCorrelation, {Type1, Type2}}} ->
-      V = pollution:getCorrelation(Type1, Type2, M),
-      Pid ! {reply, V},
-      loop(M)
+      fetchResult(pollution:getCorrelation(Type1, Type2, M), Pid, M)
   end.
 
 stop() -> ok.
@@ -64,7 +49,8 @@ stop() -> ok.
 call(Message) ->
   p_server ! {request, self(), Message},
   receive
-    {reply, Reply} -> Reply
+    {reply, Reply} -> Reply;
+    {error, Reply} -> Reply
   end.
 
 addStation(Name, {N, E}) ->
@@ -94,3 +80,13 @@ getDailyMean(Date, Type) ->
 getCorrelation(Type1, Type2) ->
   Message = {getCorrelation, {Type1, Type2}},
   call(Message).
+
+fetchResult(Result, Pid, M) ->
+  case Result of
+    {error, Message} ->
+      Pid ! {error, Message},
+      loop(M);
+    M1 ->
+      Pid ! {reply, ok},
+      loop(M1)
+  end.
