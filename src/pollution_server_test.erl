@@ -29,7 +29,7 @@ addStationSingleOK_test() ->
     {debug, M} ->
       pollution_server:stop(),
       M1 = pollution:createMonitor(),
-      {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
+      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
       ?assertEqual(M2, M)
   after
     10 ->
@@ -46,8 +46,8 @@ addStationMultipleOK_test() ->
     {debug, M} ->
       pollution_server:stop(),
       M1 = pollution:createMonitor(),
-      {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      {_, M3} = pollution:addStation("Sacz Stary", {45.6, 65.4}, M2),
+      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
+      M3 = pollution:addStation("Sacz Stary", {45.6, 65.4}, M2),
       ?assertEqual(M3, M)
   after
     10 ->
@@ -90,10 +90,10 @@ addValueSingleOK_test() ->
     {debug, M} ->
       pollution_server:stop(),
       M1 = pollution:createMonitor(),
-      {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      {_, M3} = pollution:addStation("Stary Sacz", {55.6, 77.8}, M2),
-      {_, M4} = pollution:addValue("Sacz", Date, "PM10", 105, M3),
-      {_, M5} = pollution:addValue({55.6, 77.8}, Date, "PM10", 105, M4),
+      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
+      M3 = pollution:addStation("Stary Sacz", {55.6, 77.8}, M2),
+      M4 = pollution:addValue("Sacz", Date, "PM10", 105, M3),
+      M5 = pollution:addValue({55.6, 77.8}, Date, "PM10", 105, M4),
       ?assertEqual(M5, M)
   after
     10 ->
@@ -112,9 +112,9 @@ addValueMultipleOK_test() ->
     {debug, M} ->
       pollution_server:stop(),
       M1 = pollution:createMonitor(),
-      {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      {_, M3} = pollution:addValue("Sacz", Date, "PM10", 105, M2),
-      {_, M4} = pollution:addValue("Sacz", Date, "PM2,5", 127, M3),
+      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
+      M3 = pollution:addValue("Sacz", Date, "PM10", 105, M2),
+      M4 = pollution:addValue("Sacz", Date, "PM2,5", 127, M3),
       ?assertEqual(M4, M)
   after
     10 ->
@@ -167,8 +167,8 @@ removeValueSingleOK_test() ->
     {debug, M} ->
       pollution_server:stop(),
       M1 = pollution:createMonitor(),
-      {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      {_, M3} = pollution:addStation("Stary Sacz", {55.6, 77.8}, M2),
+      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
+      M3 = pollution:addStation("Stary Sacz", {55.6, 77.8}, M2),
       ?assertEqual(M3, M)
   after
     10 ->
@@ -189,7 +189,7 @@ removeValueMultipleOK_test() ->
     {debug, M} ->
       pollution_server:stop(),
       M1 = pollution:createMonitor(),
-      {_, M2} = pollution:addStation("Sacz", {55.5, 77.7}, M1),
+      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
       ?assertEqual(M2, M)
   after
     10 ->
