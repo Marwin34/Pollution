@@ -23,25 +23,32 @@ init() ->
 loop(M) ->
   receive
     {request, Pid, {addStation, {Name, {N, E}}}} ->
-      fetchResult(pollution:addStation(Name, {N, E}, M), Pid, M);
+      Result = {monitor, pollution:addStation(Name, {N, E}, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, {addValue, {Key, Date, Type, Value}}} ->
-      fetchResult(pollution:addValue(Key, Date, Type, Value, M), Pid, M);
+      Result = {monitor, pollution:addValue(Key, Date, Type, Value, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, {removeValue, {Key, Date, Type}}} ->
-      fetchResult(pollution:removeValue(Key, Date, Type, M), Pid, M);
+      Result = {monitor, pollution:removeValue(Key, Date, Type, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, {getOneValue, {Key, Date, Type}}} ->
-      fetchResult(pollution:getOneValue(Key, Date, Type, M), Pid, M);
+      Result = {value, pollution:getOneValue(Key, Date, Type, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, {getStationMean, {Key, Type}}} ->
-      fetchResult(pollution:getStationMean(Key, Type, M), Pid, M);
+      Result = {value, pollution:getStationMean(Key, Type, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, {getDailyMean, {Date, Type}}} ->
-      fetchResult(pollution:getDailyMean(Date, Type, M), Pid, M);
+      Result = {value, pollution:getDailyMean(Date, Type, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, {getCorrelation, {Type1, Type2}}} ->
-      fetchResult(pollution:getCorrelation(Type1, Type2, M), Pid, M);
+      Result = {value, pollution:getCorrelation(Type1, Type2, M)},
+      fetchResult(Result, Pid, M);
 
     {request, Pid, stop} ->
       Pid ! {stop, ok};
@@ -55,11 +62,7 @@ call(Message) ->
     undefined -> {error, "Pollution server undefined"};
     _ -> p_server ! {request, self(), Message},
       receive
-        {monitor, Monitor} -> Monitor;
-        {error, Error} -> Error;
-        {value, ASdasdada} -> ASdasdada;
-        {stop, Reply} -> Reply;
-        {debug, Monitor} -> Monitor
+        {_, Reply} -> Reply
       end
   end.
 
@@ -96,13 +99,14 @@ stop() ->
 
 fetchResult(Result, Pid, M) ->
   case Result of
-    {error, Message} ->
-      Pid ! {error, Message},
-      loop(M);
-    {monitor, M1} ->
-      Pid ! {monitor, ok},
-      loop(M1);
+    {monitor, Value} ->
+      case Value of
+        {error, Message} -> Pid ! {error, Message}, loop(M);
+        _ -> Pid ! {monitor, ok}, loop(Value)
+      end;
     {value, Value} ->
-      Pid ! {value, Value},
-      loop(M)
+      case Value of
+        {error, Message} -> Pid ! {error, Message}, loop(M);
+        _ -> Pid ! {value, Value}, loop(M)
+      end
   end.
