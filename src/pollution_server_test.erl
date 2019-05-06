@@ -318,11 +318,17 @@ getDailyMeanBadArgumentError_test() ->
 getCorrelationOK_test() ->
   pollution_server:start(),
   pollution_server:addStation("Sacz", {55.5, 77.7}),
+  pollution_server:addStation("Krynica", {12.3, 76.0}),
+  pollution_server:addStation("Grudek", {32.1, 34.0}),
   pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM10", 125),
   pollution_server:addValue("Sacz", {{2019,5,1},{19,11,10}}, "PM2,5", 127),
+  pollution_server:addValue("Krynica", {{2019,5,1},{19,11,10}}, "PM10", 65),
+  pollution_server:addValue("Krynica", {{2019,5,1},{19,11,10}}, "PM2,5", 45),
+  pollution_server:addValue("Grudek", {{2019,5,1},{19,11,10}}, "PM10", 198),
+  pollution_server:addValue("Grudek", {{2019,5,1},{19,11,10}}, "PM2,5", 171),
   Val1 = pollution_server:getCorrelation("PM10", "PM2,5"),
   pollution_server:stop(),
-  ?assertEqual(0.0, Val1).
+  ?assertEqual(13411, round(Val1 * 1000)).
 
 getCorrelationBadArgumentError_test() ->
   ExpectedValue = "Bad arguments in function getCorrelation(Type1, Type2, Monitor).",
