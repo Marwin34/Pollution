@@ -12,7 +12,7 @@
 %% API
 -export([start/0, stop/0, init/0]).
 -export([addStation/2, addValue/4, removeValue/3, getOneValue/3, getStationMean/2, getDailyMean/2,
-  getCorrelation/2]).
+  getCorrelation/2, crash/0]).
 
 start() ->
   register(p_server, spawn(pollution_server, init, [])).
@@ -54,7 +54,10 @@ loop(M) ->
       Pid ! {stop, ok};
 
     {request, Pid, debug} ->
-      Pid ! {debug, M}
+      Pid ! {debug, M};
+
+    {request, crash} ->
+      1/0
   end.
 
 call(Message) ->
@@ -96,6 +99,9 @@ getCorrelation(Type1, Type2) ->
 
 stop() ->
   call(stop).
+
+crash() ->
+  p_server ! {request, crash}.
 
 fetchResult(Result, Pid, M) ->
   case Result of
