@@ -16,12 +16,17 @@
 -export([start/0, addStation/3, addValue/5, removeValue/4, getOneValue/4,
   getStationMean/3, getDailyMean/3, getCorrelation/3, stop/1, crash/1]).
 -export([test/0]).
+-export([start_link/1]).
 
 %% START %%
 start() ->
   gen_server:start_link({local, pollution_server}, pollution_gen_server, pollution:createMonitor(), []).
 
-%% USER INTERFACE%%
+%% SUPERVISOR START METHOD %%
+start_link(InitialValue) ->
+  gen_server:start_link({local, pollution_server}, pollution_gen_server, InitialValue, []).
+
+%% USER INTERFACE %%
 addStation(Pid, Name, {Latitude, Longitude}) ->
   gen_server:call(Pid, {addStation, Name, {Latitude, Longitude}}).
 
@@ -43,8 +48,13 @@ getDailyMean(Pid, Date, Type) ->
 getCorrelation(Pid, Type1, Type2) ->
   gen_server:call(Pid, {getCorrelation, Type1, Type2}).
 
-init(InitialValue) ->
-  {ok, InitialValue}.
+init(TableName) ->
+  case ets:file2tab(TableName) of
+    {error, Reason} -> io:format("Unable to open file:  ~p~n", [Reason]);
+    {ok, Tab} ->
+      [{monitor, InitialValue}] = ets:lookup(Tab, monitor),
+      {ok, InitialValue}
+  end.
 
 stop(Pid) ->
   gen_server:cast(Pid, stop).
@@ -54,6 +64,10 @@ crash(Pid) ->
 
 %% CALLBACKS %%
 handle_call(Message, _From, State) ->
+  case ets:file2tab("test.txt") of
+    {error, Reason} -> io:format("Unable to open file:  ~p~n", [Reason]);
+    {ok, Tab} -> ets:insert(Tab, {monitor, State}), ets:tab2file(Tab, "test.txt")
+  end,
   case Message of
     {addStation, Name, Coordinates} -> Result = {monitor, pollution:addStation(Name, Coordinates, State)};
     {addValue, Key, Date, Type, Value} -> Result = {monitor, pollution:addValue(Key, Date, Type, Value, State)};
