@@ -13,8 +13,8 @@
 
 %% API
 -export([init/1, handle_call/3, handle_cast/2, terminate/2]).
--export([start/0, addStation/3, addValue/5, removeValue/4, getOneValue/4,
-  getStationMean/3, getDailyMean/3, getCorrelation/3, stop/1, crash/1]).
+-export([start/0, addStation/2, addValue/4, removeValue/3, getOneValue/3,
+  getStationMean/2, getDailyMean/2, getCorrelation/2, stop/0, crash/0]).
 -export([test/0]).
 -export([start_link/1]).
 
@@ -27,26 +27,26 @@ start_link(InitialValue) ->
   gen_server:start_link({local, pollution_server}, pollution_gen_server, InitialValue, []).
 
 %% USER INTERFACE %%
-addStation(Pid, Name, {Latitude, Longitude}) ->
-  gen_server:call(Pid, {addStation, Name, {Latitude, Longitude}}).
+addStation(Name, {Latitude, Longitude}) ->
+  gen_server:call(pollution_server, {addStation, Name, {Latitude, Longitude}}).
 
-addValue(Pid, Key, Date, Type, Value) ->
-  gen_server:call(Pid, {addValue, Key, Date, Type, Value}).
+addValue(Key, Date, Type, Value) ->
+  gen_server:call(pollution_server, {addValue, Key, Date, Type, Value}).
 
-removeValue(Pid, Key, Date, Type) ->
-  gen_server:call(Pid, {removeValue, Key, Date, Type}).
+removeValue(Key, Date, Type) ->
+  gen_server:call(pollution_server, {removeValue, Key, Date, Type}).
 
-getOneValue(Pid, Key, Date, Type) ->
-  gen_server:call(Pid, {getOneValue, Key, Date, Type}).
+getOneValue(Key, Date, Type) ->
+  gen_server:call(pollution_server, {getOneValue, Key, Date, Type}).
 
-getStationMean(Pid, Key, Type) ->
-  gen_server:call(Pid, {getStationMean, Key, Type}).
+getStationMean(Key, Type) ->
+  gen_server:call(pollution_server, {getStationMean, Key, Type}).
 
-getDailyMean(Pid, Date, Type) ->
-  gen_server:call(Pid, {getDailyMean, Date, Type}).
+getDailyMean(Date, Type) ->
+  gen_server:call(pollution_server, {getDailyMean, Date, Type}).
 
-getCorrelation(Pid, Type1, Type2) ->
-  gen_server:call(Pid, {getCorrelation, Type1, Type2}).
+getCorrelation(Type1, Type2) ->
+  gen_server:call(pollution_server, {getCorrelation, Type1, Type2}).
 
 init(TableName) ->
   case ets:file2tab(TableName) of
@@ -56,11 +56,11 @@ init(TableName) ->
       {ok, InitialValue}
   end.
 
-stop(Pid) ->
-  gen_server:cast(Pid, stop).
+stop() ->
+  gen_server:cast(pollution_server, stop).
 
-crash(Pid) ->
-  gen_server:cast(Pid, crash).
+crash() ->
+  gen_server:cast(pollution_server, crash).
 
 %% CALLBACKS %%
 handle_call(Message, _From, State) ->
@@ -103,21 +103,23 @@ fetchResult(Result, State) ->
       end
   end.
 
+
+%% OBSOLETE AFTER SUPERVISOR %%
 test() ->
-  {ok, Pid} = start(),
-  Value1 = addStation(Pid, "Ionia", {45.6, 78.9}),
+  start(),
+  Value1 = addStation("Ionia", {45.6, 78.9}),
   io:format("Response: ~p~n", [Value1]),
-  Value2 = addValue(Pid, "Ionia", {{2019, 5, 17}, {15, 51, 4}}, "PM10", 125.0),
+  Value2 = addValue("Ionia", {{2019, 5, 17}, {15, 51, 4}}, "PM10", 125.0),
   io:format("Response: ~p~n", [Value2]),
-  Value3 = getOneValue(Pid, "Ionia", {{2019, 5, 17}, {15, 51, 4}}, "PM10"),
+  Value3 = getOneValue("Ionia", {{2019, 5, 17}, {15, 51, 4}}, "PM10"),
   io:format("Response: ~p~n", [Value3]),
-  Value4 = getStationMean(Pid, "Ionia", "PM10"),
+  Value4 = getStationMean("Ionia", "PM10"),
   io:format("Response: ~p~n", [Value4]),
-  Value5 = getDailyMean(Pid, {{2019, 5, 17}, {15, 51, 4}}, "PM10"),
+  Value5 = getDailyMean({{2019, 5, 17}, {15, 51, 4}}, "PM10"),
   io:format("Response: ~p~n", [Value5]),
-  Value6 = getCorrelation(Pid, "PM10", "PM2,5"),
+  Value6 = getCorrelation("PM10", "PM2,5"),
   io:format("Response: ~p~n", [Value6]),
-  Value7 = removeValue(Pid, "Ionia", {{2019, 5, 17}, {15, 51, 4}}, "PM10"),
+  Value7 = removeValue("Ionia", {{2019, 5, 17}, {15, 51, 4}}, "PM10"),
   io:format("Response: ~p~n", [Value7]),
-  Value8 = stop(Pid),
+  Value8 = stop(),
   io:format("Response: ~p~n", [Value8]).
