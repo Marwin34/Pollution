@@ -37,24 +37,6 @@ addStationSingleOK_test() ->
       ?assert(false)
   end.
 
-addStationMultipleOK_test() ->
-  pollution_server:start(),
-  pollution_server:addStation("Sacz", {55.5, 77.7}),
-  pollution_server:addStation("Sacz Stary", {45.6, 65.4}),
-  p_server ! {request, self(), debug},
-  receive
-    {debug, M} ->
-      pollution_server:stop(),
-      M1 = pollution:createMonitor(),
-      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      M3 = pollution:addStation("Sacz Stary", {45.6, 65.4}, M2),
-      ?assertEqual(M3, M)
-  after
-    10 ->
-      pollution_server:stop(),
-      ?assert(false)
-  end.
-
 addStationBadArgumentError_test() ->
   pollution_server:start(),
   ExpectedVal = "Bad arguments in function addStation(Name, {N,E}, Monitor).",
@@ -95,27 +77,6 @@ addValueSingleOK_test() ->
       M4 = pollution:addValue("Sacz", Date, "PM10", 105, M3),
       M5 = pollution:addValue({55.6, 77.8}, Date, "PM10", 105, M4),
       ?assertEqual(M5, M)
-  after
-    10 ->
-      pollution_server:stop(),
-      ?assert(false)
-  end.
-
-addValueMultipleOK_test() ->
-  pollution_server:start(),
-  pollution_server:addStation("Sacz", {55.5, 77.7}),
-  Date = calendar:local_time(),
-  pollution_server:addValue("Sacz", Date, "PM10", 105),
-  pollution_server:addValue("Sacz", Date, "PM2,5", 127),
-  p_server ! {request, self(), debug},
-  receive
-    {debug, M} ->
-      pollution_server:stop(),
-      M1 = pollution:createMonitor(),
-      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      M3 = pollution:addValue("Sacz", Date, "PM10", 105, M2),
-      M4 = pollution:addValue("Sacz", Date, "PM2,5", 127, M3),
-      ?assertEqual(M4, M)
   after
     10 ->
       pollution_server:stop(),
@@ -170,27 +131,6 @@ removeValueSingleOK_test() ->
       M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
       M3 = pollution:addStation("Stary Sacz", {55.6, 77.8}, M2),
       ?assertEqual(M3, M)
-  after
-    10 ->
-      pollution_server:stop(),
-      ?assert(false)
-  end.
-
-removeValueMultipleOK_test() ->
-  pollution_server:start(),
-  pollution_server:addStation("Sacz", {55.5, 77.7}),
-  Date = calendar:local_time(),
-  pollution_server:addValue("Sacz", Date, "PM10", 105),
-  pollution_server:addValue("Sacz", Date, "PM2,5", 127),
-  pollution_server:removeValue("Sacz", Date, "PM10"),
-  pollution_server:removeValue("Sacz", Date, "PM2,5"),
-  p_server ! {request, self(), debug},
-  receive
-    {debug, M} ->
-      pollution_server:stop(),
-      M1 = pollution:createMonitor(),
-      M2 = pollution:addStation("Sacz", {55.5, 77.7}, M1),
-      ?assertEqual(M2, M)
   after
     10 ->
       pollution_server:stop(),

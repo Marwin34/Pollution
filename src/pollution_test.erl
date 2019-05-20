@@ -14,8 +14,6 @@
 -compile(exprots_all).
 
 -record(monitor, {stations = #{}, measures = #{}}).
--record(station, {name, coordinates}).
--record(measurement, {value}).
 
 createModule_test() ->
   ExpectedValue = #monitor{},
@@ -210,10 +208,16 @@ getDailyMeanBadArgumentError_test() ->
 getCorrelationOK_test() ->
   M = pollution:createMonitor(),
   M1 = pollution:addStation("Cidaris", {55.5, 77.7}, M),
-  M2 = pollution:addValue("Cidaris", {{2019, 5, 1}, {19, 11, 10}}, "PM10", 125, M1),
-  M3 = pollution:addValue("Cidaris", {{2019, 5, 1}, {19, 11, 10}}, "PM2,5", 127, M2),
-  Val1 = pollution:getCorrelation("PM10", "PM2,5", M3),
-  ?assertEqual(0.0, Val1).
+  M2 = pollution:addStation("Cindra", {12.3, 76.0}, M1),
+  M3 = pollution:addStation("Brugge", {32.1, 34.0}, M2),
+  M4 = pollution:addValue("Cidaris", {{2019,5,1},{19,11,10}}, "PM10", 125, M3),
+  M5 = pollution:addValue("Cidaris", {{2019,5,1},{19,11,10}}, "PM2,5", 127, M4),
+  M6 = pollution:addValue("Cindra", {{2019,5,1},{19,11,10}}, "PM10", 65, M5),
+  M7 = pollution:addValue("Cindra", {{2019,5,1},{19,11,10}}, "PM2,5", 45, M6),
+  M8 = pollution:addValue("Brugge", {{2019,5,1},{19,11,10}}, "PM10", 198, M7),
+  M9 = pollution:addValue("Brugge", {{2019,5,1},{19,11,10}}, "PM2,5", 171, M8),
+  Val1 = pollution:getCorrelation("PM10", "PM2,5", M9),
+  ?assertEqual(13411, round(Val1 * 1000)).
 
 getCorrelationBadArgumentError_test() ->
   ExpectedValue = "Bad arguments in function getCorrelation(Type1, Type2, Monitor).",
