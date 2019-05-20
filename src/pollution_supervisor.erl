@@ -15,14 +15,13 @@
 -export([init/1]).
 
 initialize_ets() ->
-  Table = ets:new(monitors, [set]),
-  ets:insert(Table, {monitor, pollution:createMonitor()}),
-  ets:tab2file(Table, "test.txt").
+  Table = ets:new(monitors, [set, named_table, public]),
+  ets:insert(Table, {monitor, pollution:createMonitor()}).
 
 start() ->
   initialize_ets(),
   supervisor:start_link({local, pollution_server_supervisor}, pollution_supervisor,
-    "test.txt").
+    monitors).
 
 init(InitialValue) ->
   {ok, {

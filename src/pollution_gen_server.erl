@@ -48,13 +48,9 @@ getDailyMean(Date, Type) ->
 getCorrelation(Type1, Type2) ->
   gen_server:call(pollution_server, {getCorrelation, Type1, Type2}).
 
-init(TableName) ->
-  case ets:file2tab(TableName) of
-    {error, Reason} -> io:format("Unable to open file:  ~p~n", [Reason]);
-    {ok, Tab} ->
-      [{monitor, InitialValue}] = ets:lookup(Tab, monitor),
-      {ok, InitialValue}
-  end.
+init(InitialValueTable) ->
+      [{monitor, InitialValue}] = ets:lookup(InitialValueTable, monitor),
+      {ok, InitialValue}.
 
 stop() ->
   gen_server:cast(pollution_server, stop).
@@ -64,10 +60,7 @@ crash() ->
 
 %% CALLBACKS %%
 handle_call(Message, _From, State) ->
-  case ets:file2tab("test.txt") of
-    {error, Reason} -> io:format("Unable to open file:  ~p~n", [Reason]);
-    {ok, Tab} -> ets:insert(Tab, {monitor, State}), ets:tab2file(Tab, "test.txt")
-  end,
+  ets:insert(monitors, {monitor, State}),
   case Message of
     {addStation, Name, Coordinates} -> Result = {monitor, pollution:addStation(Name, Coordinates, State)};
     {addValue, Key, Date, Type, Value} -> Result = {monitor, pollution:addValue(Key, Date, Type, Value, State)};
@@ -80,6 +73,7 @@ handle_call(Message, _From, State) ->
   fetchResult(Result, State).
 
 handle_cast(Request, State) ->
+  ets:insert(monitors, {monitor, State}),
   case Request of
     stop -> {stop, normal, State};
     crash -> 1 / 0
