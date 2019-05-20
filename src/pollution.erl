@@ -110,7 +110,7 @@ getStationMean(Key, Type, Monitor) ->
                 List = maps:to_list(maps:filter(fun({StationName2, StationCoordinates2, _, Type2}, _) ->
                   (StationName2 == StationName) and (StationCoordinates2 == StationCoordinates) and (Type2 == Type) end,
                   Monitor#monitor.measures)),
-                  calculateAvg(List, 0, 0);
+                calculateAvg(List, 0, 0);
               false -> {error, "Unable to calculate mean, station doesn't exist."}
             end;
     _ -> {error, "Bad arguments in function getStationMean(Key, Type, Monitor)."}
@@ -135,16 +135,13 @@ getCorrelation(Type1, Type2, Monitor) ->
       Len2 = length(List2),
       if
         (Len1 =< 0) or (Len2 =< 0) -> {error, "Unable to measure correlation, one list is empty"};
-        true -> case Len1 >= Len2 of
-                  true -> calculateStd(List1, List2);
-                  false -> calculateStd(List2, List1)
-                end
+        true -> calculateStd(List1, List2)
       end;
     _ -> {error, "Bad arguments in function getCorrelation(Type1, Type2, Monitor)."}
   end.
 
-calculateStd(Longer, Shorter) ->
-  Diffs = [V#measurement.value - valueFromShorter(Shorter, Key) || {{Key, _, _, _}, V} <- Longer, isInList(Shorter, Key)],
+calculateStd(List1, List2) ->
+  Diffs = [V#measurement.value - valueFromShorter(List2, Key, Date) || {{Key, Date, _, _}, V} <- List1, isInList(List2, Key, Date)],
   Sum = lists:foldl(fun(X, Acc) -> Acc + X end, 0, Diffs),
   Len = length(Diffs),
   Avg = Sum / length(Diffs),
@@ -154,12 +151,12 @@ calculateStd(Longer, Shorter) ->
     true -> math:sqrt(1 / (Len - 1) * Stdsum) * getCEstimator(Len)
   end.
 
-isInList(List, Target) ->
-  Res = [Key || {{Key, _, _, _}, _} <- List, Target == Key],
+isInList(List, TargetKey, TargetDate) ->
+  Res = [Key || {{Key, Date, _, _}, _} <- List, (TargetKey == Key) and (TargetDate == Date)],
   length(Res) > 0.
 
-valueFromShorter(Shorter, Key) ->
-  Tmp = lists:filter(fun({{Key1, _, _, _}, _}) -> Key1 == Key end, Shorter),
+valueFromShorter(Shorter, TargetKey, TargetDate) ->
+  Tmp = lists:filter(fun({{Key, Date, _, _}, _}) -> (TargetKey == Key) and (TargetDate == Date) end, Shorter),
   if
     length(Tmp) == 1 ->
       [{_, V}] = Tmp,
